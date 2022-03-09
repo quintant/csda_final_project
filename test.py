@@ -3,7 +3,7 @@
 from random import randint
 from AuWav.auwav import AuWav
 
-au = AuWav('mudic.wav')
+au = AuWav('wizz.wav')
 # au.play()
 with open('data.txt') as f:
     DATA = f.read()

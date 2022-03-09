@@ -95,43 +95,40 @@ class AuWav:
 
         
         rand = Random(key)
-        USED = set()
+        USED = []
 
         BYTES = self.read_all_bytes()
         genBits = 0
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Encoding file.")
         for bit in tqdm(self.bitgen(data_toEncrypt), total=len(data_toEncrypt)*8):
             genBits += 1
+
             idx = rand.randint(0, len(BYTES))
             while idx in USED:
                 idx = rand.randint(0, len(BYTES))
 
-            idx2 = (idx+1) % len(BYTES)
-            USED.add(idx)
-            USED.add(idx2)
+            # idx2 = (idx+1) % len(BYTES)
+            idx2 = rand.randint(0, len(BYTES))
+            while idx2 == idx:
+                idx2 = rand.randint(0, len(BYTES))
 
             dat1 = BYTES[idx]
             dat2 = BYTES[idx2]
+
+            USED.append(idx)
+            USED.append(idx2)
 
             match (dat1 - dat2) %2, bit:
                 case (0, 0)|(1,1):
                     continue
 
                 case (1, 0)|(0, 1):
-                    if dat1 >= dat2:
-                        # if dat1> 0xffff/2:
-                            BYTES[idx] = (dat1+1) % 0x10000
-                        # else:
-                            # BYTES[idx] = (dat1-1) % 0x10000
-                    else:
-                        # if dat2> 0xffff/2:
-                            BYTES[idx2] = (dat2+1) % 0x10000
-                        # else:
-                            # BYTES[idx2] = (dat2-1) % 0x1000
+                    BYTES[idx] = (dat1+1) % 0x10000
                         
                 case _:
                     print("FUCK there is a error.")                   
                     exit(-1)
+
             
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Writing encoded file.")
         for byt in tqdm(BYTES):
@@ -147,7 +144,7 @@ class AuWav:
         decrypted_data = b""
         
         rand = Random(key)
-        USED = set()
+        USED = []
 
         byt = 0
         b_idx = 0
@@ -157,12 +154,16 @@ class AuWav:
             while idx in USED:
                 idx = rand.randint(0, len(BYTES))
 
-            idx2 = (idx+1) % len(BYTES)
+            # idx2 = (idx+1) % len(BYTES)
+            idx2 = rand.randint(0, len(BYTES))
+            while idx2 == idx:
+                idx2 = rand.randint(0, len(BYTES))
+
             dat1 = BYTES[idx]
             dat2 = BYTES[idx2]
             
-            USED.add(idx)
-            USED.add(idx2)
+            USED.append(idx)
+            USED.append(idx2)
 
             diff = ((dat1 - dat2) % 2)
             byt += (diff << b_idx)
