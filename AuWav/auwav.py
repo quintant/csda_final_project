@@ -1,8 +1,13 @@
-from random import randint, random, uniform
+from ast import For
+from random import Random, randint, random, uniform
+from typing import List, Tuple
 import wave
 import numpy as np
 import pyaudio
 from Misc.sinewave import create_sine_func
+from tqdm import tqdm, trange
+
+from colorama import Fore
 
 
 class AuWav:
@@ -49,7 +54,7 @@ class AuWav:
         out = wave.open("out.wav", "wb")
         out.setnchannels(1)
         out.setcomptype("NONE", "Not compressed")
-        out.setframerate(44100 * 2)
+        out.setframerate(44100)
         out.setsampwidth(2)
         amp = 10
         # frq = 30
@@ -64,11 +69,113 @@ class AuWav:
             )
             frq += frq/out.getframerate()
             sin = sine(cnt)
-            o = int(1 if sin>0 else 0) & 0xFFFF # Square wave
-            # o = round(sin) % 0xFFFF # Sine wave
+            # o = int(1 if sin>0 else 0) & 0xFFFF # Square wave
+            o = round(sin) % 0xFFFF # Sine wave
+            print(o)
             p = o.to_bytes(out.getsampwidth(), "big")
             out.writeframes(p)
         return AuWav("out.wav")
+
+    @staticmethod
+    def bitgen(data):
+        for dat in data:
+            for i in range(8):
+                yield (dat>>i) &0x1
+
+    def read_all_bytes(self) -> List[int]:
+        self.fd.setpos(0)
+        return [int.from_bytes(self.fd.readframes(1), 'big') for _ in range(self.fd.getnframes())]
+
+    def encode(self, data_toEncrypt:bytes, key:int) -> Tuple["AuWav", int]:
+        out = wave.open("out.wav", "wb")
+        out.setnchannels(self.fd.getnchannels())
+        out.setcomptype(self.fd.getcomptype(), self.fd.getcompname())
+        out.setframerate(self.fd.getframerate())
+        out.setsampwidth(self.fd.getsampwidth())
+
+        
+        rand = Random(key)
+        USED = set()
+
+        BYTES = self.read_all_bytes()
+        genBits = 0
+        print(f"{Fore.YELLOW}[!]{Fore.RESET} Encoding file.")
+        for bit in tqdm(self.bitgen(data_toEncrypt), total=len(data_toEncrypt)*8):
+            genBits += 1
+            idx = rand.randint(0, len(BYTES))
+            while idx in USED:
+                idx = rand.randint(0, len(BYTES))
+
+            idx2 = (idx+1) % len(BYTES)
+            USED.add(idx)
+            USED.add(idx2)
+
+            dat1 = BYTES[idx]
+            dat2 = BYTES[idx2]
+
+            match (dat1 - dat2) %2, bit:
+                case (0, 0)|(1,1):
+                    continue
+
+                case (1, 0)|(0, 1):
+                    if dat1 >= dat2:
+                        # if dat1> 0xffff/2:
+                            BYTES[idx] = (dat1+1) % 0x10000
+                        # else:
+                            # BYTES[idx] = (dat1-1) % 0x10000
+                    else:
+                        # if dat2> 0xffff/2:
+                            BYTES[idx2] = (dat2+1) % 0x10000
+                        # else:
+                            # BYTES[idx2] = (dat2-1) % 0x1000
+                        
+                case _:
+                    print("FUCK there is a error.")                   
+                    exit(-1)
+            
+        print(f"{Fore.YELLOW}[!]{Fore.RESET} Writing encoded file.")
+        for byt in tqdm(BYTES):
+            xxx = byt.to_bytes(2, 'big')
+            out.writeframes(xxx)
+
+        return AuWav("out.wav"), genBits
+
+
+    def decode(self, bits:int, key:int) -> str:
+        BYTES = self.read_all_bytes()
+
+        decrypted_data = b""
+        
+        rand = Random(key)
+        USED = set()
+
+        byt = 0
+        b_idx = 0
+        print(f"{Fore.CYAN}[!]{Fore.RESET} Decoding file.")
+        for _ in trange(bits):
+            idx = rand.randint(0, len(BYTES))
+            while idx in USED:
+                idx = rand.randint(0, len(BYTES))
+
+            idx2 = (idx+1) % len(BYTES)
+            dat1 = BYTES[idx]
+            dat2 = BYTES[idx2]
+            
+            USED.add(idx)
+            USED.add(idx2)
+
+            diff = ((dat1 - dat2) % 2)
+            byt += (diff << b_idx)
+            if b_idx == 7:
+                decrypted_data += byt.to_bytes(1, 'little')
+                byt = 0
+                b_idx = 0
+            else:
+                b_idx+=1
+
+        # print(decrypted_data)
+        return decrypted_data.decode('ascii')
+
 
     def close(self) -> None:
         """Closes everything gracefullys"""

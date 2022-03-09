@@ -43,7 +43,7 @@ def main(argv) -> None:
     args = parse_arguments()
     print(args)
 
-    if args.e:
+    if args.encrypt:
         pass
     else:
         pass

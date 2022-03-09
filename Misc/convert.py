@@ -31,8 +31,8 @@ def convert(filename:str) -> str:
 
 if __name__ == "__main__":
     from colorama import init
-    from ..Banner.banner import display_banner
-    display_banner()
+    # from ..Banner.banner import display_banner
+    # display_banner()
     init(autoreset=True)
     filename = sys.argv[1]
 
