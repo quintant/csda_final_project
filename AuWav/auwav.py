@@ -1,8 +1,6 @@
-from ast import For
-from random import Random, randint, random, uniform
+from random import Random, choice, randint, random, uniform
 from typing import List, Tuple
 import wave
-import numpy as np
 import pyaudio
 from Misc.sinewave import create_sine_func
 from tqdm import tqdm, trange
@@ -107,10 +105,13 @@ class AuWav:
             while idx in USED:
                 idx = rand.randint(0, len(BYTES))
 
-            # idx2 = (idx+1) % len(BYTES)
-            idx2 = rand.randint(0, len(BYTES))
-            while idx2 == idx:
+            if len(USED) == 0:
                 idx2 = rand.randint(0, len(BYTES))
+                while idx2 == idx:
+                    idx2 = rand.randint(0, len(BYTES))
+            else:
+                idx2 = rand.choice(USED)
+
 
             dat1 = BYTES[idx]
             dat2 = BYTES[idx2]
@@ -123,7 +124,13 @@ class AuWav:
                     continue
 
                 case (1, 0)|(0, 1):
-                    BYTES[idx] = (dat1+1) % 0x10000
+                    gx = 1
+                    # Lessen the impact of modifying value.
+                    if dat1 <= 0xffff//2:
+                        gx = +1
+                    else:
+                        gx = -1
+                    BYTES[idx] = (dat1+gx) % 0x10000
                         
                 case _:
                     print("FUCK there is a error.")                   
@@ -150,14 +157,18 @@ class AuWav:
         b_idx = 0
         print(f"{Fore.CYAN}[!]{Fore.RESET} Decoding file.")
         for _ in trange(bits):
+
             idx = rand.randint(0, len(BYTES))
             while idx in USED:
                 idx = rand.randint(0, len(BYTES))
 
-            # idx2 = (idx+1) % len(BYTES)
-            idx2 = rand.randint(0, len(BYTES))
-            while idx2 == idx:
+
+            if len(USED) == 0:
                 idx2 = rand.randint(0, len(BYTES))
+                while idx2 == idx:
+                    idx2 = rand.randint(0, len(BYTES))
+            else:
+                idx2 = rand.choice(USED)
 
             dat1 = BYTES[idx]
             dat2 = BYTES[idx2]

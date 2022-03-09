@@ -2,12 +2,17 @@ import sys
 import wave
 
 import pylab
-def graph_spectrogram(wav_file):
-    sound_info, frame_rate = get_wav_info(wav_file)
+def graph_spectrogram(wav_file1, wav_file2):
+    sound_info1, frame_rate1 = get_wav_info(wav_file1)
+    sound_info2, frame_rate2 = get_wav_info(wav_file2)
+    if frame_rate1 != frame_rate2:
+        print('Not similar files.')
+
+    sound_info = sound_info1 - sound_info2
     pylab.figure(num=None, figsize=(19, 12))
     pylab.subplot(111)
-    pylab.title('spectrogram of %r' % wav_file)
-    pylab.specgram(sound_info, Fs=frame_rate)
+    pylab.title(f'spectrogram of diff between {wav_file1} and {wav_file2}')
+    pylab.specgram(sound_info, Fs=frame_rate1)
     pylab.savefig('spectrogram.png')
     # pylab.show()
 def get_wav_info(wav_file):
@@ -20,4 +25,4 @@ def get_wav_info(wav_file):
 
 
 if __name__ == "__main__":
-    graph_spectrogram(sys.argv[1])
+    graph_spectrogram(sys.argv[1], sys.argv[2])

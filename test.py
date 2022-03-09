@@ -3,7 +3,7 @@
 from random import randint
 from AuWav.auwav import AuWav
 
-au = AuWav('wizz.wav')
+au = AuWav('mudic.wav')
 # au.play()
 with open('data.txt') as f:
     DATA = f.read()
@@ -11,9 +11,9 @@ with open('data.txt') as f:
 DATA = DATA.encode('ascii')
 print(f"Encoding the following data {DATA}")
 print(f"{len(DATA)} bytes")
-g, bits = au.encode(DATA, key=248729847)
+g, bits = au.encode(DATA, key=1337)
 # g.play()
-DECODED = g.decode(bits, key=248729847)
+DECODED = g.decode(bits, key=1337)
 print(f"Should be: {DATA.decode('ascii')}")
 print(f"It's decoded to: {DECODED}")
 
