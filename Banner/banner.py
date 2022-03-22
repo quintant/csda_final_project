@@ -1,4 +1,4 @@
-from colorama import Fore
+from colorama import Fore, Back
 import Banner.pb_girl as pb_girl
 import Banner.gold_bar as gold_bar
 import Banner.crown as crown
@@ -20,11 +20,11 @@ def display_banner(random=False):
 
 def display_name():
     name = [
-        f"{Fore.CYAN: <35} ▄▄▄· ▄• ▄▌.▄▄ · ▄▄▄▄▄▄▄▄ . ▄▄ • ",
-        f"{Fore.CYAN: <35}▐█ ▀█ █▪██▌▐█ ▀. •██  ▀▄.▀·▐█ ▀ ▪",
-        f"{Fore.CYAN: <35}▄█▀▀█ █▌▐█▌▄▀▀▀█▄ ▐█.▪▐▀▀▪▄▄█ ▀█▄",
-        f"{Fore.CYAN: <35}▐█ ▪▐▌▐█▄█▌▐█▄▪▐█ ▐█▌·▐█▄▄▌▐█▄▪▐█",
-        f"{Fore.CYAN: <35} ▀  ▀  ▀▀▀  ▀▀▀▀  ▀▀▀  ▀▀▀ ·▀▀▀▀ ",
+        f"{Back.BLACK+Fore.MAGENTA: >35} ▄▄▄· ▄• ▄▌.▄▄ · ▄▄▄▄▄▄▄▄ . ▄▄ • ",
+        f"{Back.BLACK+Fore.BLUE: >35}▐█ ▀█ █▪██▌▐█ ▀. •██  ▀▄.▀·▐█ ▀ ▪",
+        f"{Back.BLACK+Fore.LIGHTBLUE_EX: >35}▄█▀▀█ █▌▐█▌▄▀▀▀█▄ ▐█.▪▐▀▀▪▄▄█ ▀█▄",
+        f"{Back.BLACK+Fore.CYAN: >35}▐█ ▪▐▌▐█▄█▌▐█▄▪▐█ ▐█▌·▐█▄▄▌▐█▄▪▐█",
+        f"{Back.BLACK+Fore.LIGHTCYAN_EX: >35} ▀  ▀  ▀▀▀  ▀▀▀▀  ▀▀▀  ▀▀▀ ·▀▀▀▀ ",
     ]
     for line in name:
         print(line)

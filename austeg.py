@@ -7,11 +7,14 @@ from Banner import banner
 from DEncode.dencode import decode, encode
 
 
-init(autoreset=True)
+init(autoreset=True, convert=True)
 
 
 def parse_arguments() -> Namespace:
-    parser = ArgumentParser(description="Parse arguments.")
+    parser = ArgumentParser(
+        description="""
+        Hides data inside of audio files.
+        """)
 
     # Required arguments
     parser.add_argument(
@@ -56,7 +59,7 @@ def main(argv) -> None:
     banner.display_banner(False)
 
     args = parse_arguments()
-    print(args)
+    # print(args)
     au = AuWav(args.input)
     if args.encrypt:
         if args.data is None:
