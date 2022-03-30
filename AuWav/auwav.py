@@ -137,7 +137,8 @@ class AuWav(AuBase):
             else:
                 b_idx += 1
         try:
-            return decrypted_data.decode("ascii")
+            # return decrypted_data.decode("ascii")
+            return decrypted_data.decode("utf-8")
         except UnicodeDecodeError:
             print(
                 f"\n{Fore.CYAN}[SUGGESTION]{Fore.RESET} Possible wrong number of bits or data is in binary format."

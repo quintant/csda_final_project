@@ -13,9 +13,9 @@ def encode(au, filename, key) -> AuWav:
     Returns:
         AuWav: Audio file with the hidden data.
     """    
-    with open(filename) as f:
+    with open(filename, 'rb') as f:
         data = f.read()
-        data = data.encode('ascii')
+        # data = data.encode('ascii')
         n_au, bits = au.encode(data, key=key)
         print(f"{Fore.CYAN}[!]{Fore.RESET}: Encoded {bits} bits")
         return n_au
