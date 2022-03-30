@@ -83,9 +83,16 @@ class AuWav(AuBase):
 
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Writing encoded file.")
         data_toWrite = b""
+        CHUCK_SIZE = 1024
+        cnt = 0
         for byt in tqdm(BYTES):
             xxx = byt.to_bytes(SAMP_SIZE, "big")
             data_toWrite += xxx
+            if cnt == CHUCK_SIZE:
+                out.writeframes(data_toWrite)
+                data_toWrite = b""
+                cnt = 0
+            cnt += 1
         out.writeframes(data_toWrite)
 
         return AuWav("out.wav"), genBits
@@ -104,7 +111,7 @@ class AuWav(AuBase):
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Decoding file.")
         for _ in trange(bits):
 
-            idx = rand.randint(0, len(BYTES))
+            idx = rand.randint(0, len(BYTES)-1)
             while idx in USED:
                 idx = rand.randint(0, len(BYTES)-1)
 
@@ -133,6 +140,6 @@ class AuWav(AuBase):
             return decrypted_data.decode("ascii")
         except UnicodeDecodeError:
             print(
-                f"{Fore.CYAN}[SUGGESTION]{Fore.RESET} Possible wrong number of bits or data is in binary format."
+                f"\n{Fore.CYAN}[SUGGESTION]{Fore.RESET} Possible wrong number of bits or data is in binary format."
             )
             return decrypted_data.decode("ansi")
