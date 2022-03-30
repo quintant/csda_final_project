@@ -2,8 +2,8 @@ from argparse import ArgumentParser, Namespace
 from ast import arg
 from sys import argv
 from colorama import Fore, init
-from AuWav.auwav import AuWav
-from Banner import banner
+from AuWav import AuWav
+from Banner import display_banner
 from DEncode.dencode import decode, encode
 
 
@@ -56,7 +56,7 @@ def main(argv) -> None:
     Args:
         args (list): List of arguments passed to the program
     """
-    banner.display_banner(False)
+    display_banner(False)
 
     args = parse_arguments()
     # print(args)

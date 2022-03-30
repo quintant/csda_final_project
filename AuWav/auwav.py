@@ -1,38 +1,26 @@
-from random import Random, choice, randint, random, uniform
+from random import Random
 from typing import List, Tuple
 import wave
-import pyaudio
-from Misc.sinewave import create_sine_func
 from tqdm import tqdm, trange
 
 from colorama import Fore
 
+from AuWav.base import AuBase
 
-class AuWav:
-    def __init__(self, filename: str, chunk_size: int = 1024) -> None:
-        self.filename = filename
-        self.fd = wave.open(self.filename, "rb")
-        self.pyaudio = pyaudio.PyAudio()
-        self.chunk_size = chunk_size
-        self.stream = self.pyaudio.open(
-            format=self.pyaudio.get_format_from_width(self.fd.getsampwidth()),
-            channels=self.fd.getnchannels(),
-            rate=self.fd.getframerate(),
-            output=True,
-        )
 
-    def play(self) -> None:
-
-        while data := self.fd.readframes(self.chunk_size):
-            self.stream.write(data)
+class AuWav(AuBase):
+    def __init__(self, filename: str) -> None:
+        super().__init__(filename)
 
     @staticmethod
     def bitgen(data):
+        """Generates all bits from data."""
         for dat in data:
             for i in range(8):
                 yield (dat >> i) & 0x1
 
     def read_all_bytes(self) -> List[int]:
+        """Reads all bytes from file."""
         self.fd.setpos(0)
         print(f"{Fore.YELLOW}[*]{Fore.RESET} Loading data...")
         dat = []
@@ -42,11 +30,13 @@ class AuWav:
         return dat
 
     def encode(self, data_toEncrypt: bytes, key: int) -> Tuple["AuWav", int]:
+        """Encodes data with key."""
         out = wave.open("out.wav", "wb")
         out.setnchannels(self.fd.getnchannels())
         out.setcomptype(self.fd.getcomptype(), self.fd.getcompname())
         out.setframerate(self.fd.getframerate())
-        out.setsampwidth(self.fd.getsampwidth())
+        SAMP_SIZE = self.fd.getsampwidth()
+        out.setsampwidth(SAMP_SIZE)
 
         rand = Random(key)
         USED = []
@@ -57,14 +47,14 @@ class AuWav:
         for bit in tqdm(self.bitgen(data_toEncrypt), total=len(data_toEncrypt) * 8):
             genBits += 1
 
-            idx = rand.randint(0, len(BYTES))
+            idx = rand.randint(0, len(BYTES)-1)
             while idx in USED:
-                idx = rand.randint(0, len(BYTES))
+                idx = rand.randint(0, len(BYTES)-1)
 
             if len(USED) == 0:
-                idx2 = rand.randint(0, len(BYTES))
+                idx2 = rand.randint(0, len(BYTES)-1)
                 while idx2 == idx:
-                    idx2 = rand.randint(0, len(BYTES))
+                    idx2 = rand.randint(0, len(BYTES)-1)
             else:
                 idx2 = rand.choice(USED)
 
@@ -88,19 +78,20 @@ class AuWav:
                     BYTES[idx] = (dat1 + gx) % 0x10000
 
                 case _:
-                    print("FUCK there is a error.")
+                    print("Hmm, some patternmatching error there is. :/\n\t- YOda (2022)")
                     exit(-1)
 
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Writing encoded file.")
-        data_toWrite = b''
+        data_toWrite = b""
         for byt in tqdm(BYTES):
-            xxx = byt.to_bytes(2, "big")
+            xxx = byt.to_bytes(SAMP_SIZE, "big")
             data_toWrite += xxx
         out.writeframes(data_toWrite)
 
         return AuWav("out.wav"), genBits
 
     def decode(self, bits: int, key: int) -> str:
+        """Decodes data with key."""
         BYTES = self.read_all_bytes()
 
         decrypted_data = b""
@@ -115,12 +106,12 @@ class AuWav:
 
             idx = rand.randint(0, len(BYTES))
             while idx in USED:
-                idx = rand.randint(0, len(BYTES))
+                idx = rand.randint(0, len(BYTES)-1)
 
             if len(USED) == 0:
-                idx2 = rand.randint(0, len(BYTES))
+                idx2 = rand.randint(0, len(BYTES)-1)
                 while idx2 == idx:
-                    idx2 = rand.randint(0, len(BYTES))
+                    idx2 = rand.randint(0, len(BYTES)-1)
             else:
                 idx2 = rand.choice(USED)
 
@@ -141,10 +132,7 @@ class AuWav:
         try:
             return decrypted_data.decode("ascii")
         except UnicodeDecodeError:
-            print(f"{Fore.CYAN}[SUGGESTION]{Fore.RESET} Possible wrong number of bits or data is in binary format.")
-            return decrypted_data.decode('ansi')
-
-
-    def close(self) -> None:
-        """Closes everything gracefullys"""
-        self.pyaudio.terminate()
+            print(
+                f"{Fore.CYAN}[SUGGESTION]{Fore.RESET} Possible wrong number of bits or data is in binary format."
+            )
+            return decrypted_data.decode("ansi")
