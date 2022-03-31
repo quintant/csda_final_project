@@ -16,9 +16,17 @@ def parse_arguments() -> Namespace:
         Hides data inside of audio files.
         """)
 
+    # Select which algorithm to use
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-lsb", help="Use LSB algorithm", action="store_true", dest="lsb")
+    
+    group.add_argument(
+        "-spectro", help="Use Spectrogram algorithm", action="store_true", dest="spectro")
+
     # Required arguments
     parser.add_argument(
-        "-i", "--input", type=str, help="Input filename.", required=True
+        "-i", "--input", type=str, help="Input filename.", required=False
     )
     parser.add_argument(
         "-k",
@@ -60,7 +68,15 @@ def main(argv) -> None:
 
     args = parse_arguments()
     # print(args)
-    au = AuWav(args.input)
+    # au = AuWav(args.input)
+
+    print(args.input)
+    if args.lsb:
+        if args.input is None:
+            print(f"{Fore.RED}[!!] Error: No input file specified")
+            exit(1)
+    else:
+        au = AuWav(args.input)
     if args.encrypt:
         if args.data is None:
             print(f"{Fore.RED}[!!] You need to provide some data to encode.")
