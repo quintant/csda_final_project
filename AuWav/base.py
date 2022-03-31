@@ -7,10 +7,11 @@ import wave
 
 
 class AuBase(ABC):
-    def __init__(self, filename:str, ) -> None:
+    def __init__(self, input_filename:str, output_filename:str='out.wav') -> None:
         super().__init__()
-        self.filename = filename
-        self.fd = wave.open(self.filename, "rb")
+        self.filename = input_filename
+        self.out_file = output_filename
+        
 
     def encode(self, data_toEncrypt: bytes, key: int) -> Tuple["AuBase", int]:
         raise NotImplementedError

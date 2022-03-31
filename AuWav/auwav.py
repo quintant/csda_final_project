@@ -9,8 +9,9 @@ from AuWav.base import AuBase
 
 
 class AuWav(AuBase):
-    def __init__(self, filename: str) -> None:
-        super().__init__(filename)
+    def __init__(self, filename: str, out_filename: str = "out.wav") -> None:
+        super().__init__(filename, out_filename)
+        self.fd = wave.open(self.filename, "rb")
 
     @staticmethod
     def bitgen(data):
@@ -31,7 +32,7 @@ class AuWav(AuBase):
 
     def encode(self, data_toEncrypt: bytes, key: int) -> Tuple["AuWav", int]:
         """Encodes data with key."""
-        out = wave.open("out.wav", "wb")
+        out = wave.open(self.out_file, "wb")
         out.setnchannels(self.fd.getnchannels())
         out.setcomptype(self.fd.getcomptype(), self.fd.getcompname())
         out.setframerate(self.fd.getframerate())
@@ -47,14 +48,14 @@ class AuWav(AuBase):
         for bit in tqdm(self.bitgen(data_toEncrypt), total=len(data_toEncrypt) * 8):
             genBits += 1
 
-            idx = rand.randint(0, len(BYTES)-1)
+            idx = rand.randint(0, len(BYTES) - 1)
             while idx in USED:
-                idx = rand.randint(0, len(BYTES)-1)
+                idx = rand.randint(0, len(BYTES) - 1)
 
             if len(USED) == 0:
-                idx2 = rand.randint(0, len(BYTES)-1)
+                idx2 = rand.randint(0, len(BYTES) - 1)
                 while idx2 == idx:
-                    idx2 = rand.randint(0, len(BYTES)-1)
+                    idx2 = rand.randint(0, len(BYTES) - 1)
             else:
                 idx2 = rand.choice(USED)
 
@@ -78,7 +79,9 @@ class AuWav(AuBase):
                     BYTES[idx] = (dat1 + gx) % 0x10000
 
                 case _:
-                    print("Hmm, some patternmatching error there is. :/\n\t- YOda (2022)")
+                    print(
+                        "Hmm, some patternmatching error there is. :/\n\t- YOda (2022)"
+                    )
                     exit(-1)
 
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Writing encoded file.")
@@ -95,7 +98,7 @@ class AuWav(AuBase):
             cnt += 1
         out.writeframes(data_toWrite)
 
-        return AuWav("out.wav"), genBits
+        return AuWav(self.out_file), genBits
 
     def decode(self, bits: int, key: int) -> str:
         """Decodes data with key."""
@@ -111,14 +114,14 @@ class AuWav(AuBase):
         print(f"{Fore.YELLOW}[!]{Fore.RESET} Decoding file.")
         for _ in trange(bits):
 
-            idx = rand.randint(0, len(BYTES)-1)
+            idx = rand.randint(0, len(BYTES) - 1)
             while idx in USED:
-                idx = rand.randint(0, len(BYTES)-1)
+                idx = rand.randint(0, len(BYTES) - 1)
 
             if len(USED) == 0:
-                idx2 = rand.randint(0, len(BYTES)-1)
+                idx2 = rand.randint(0, len(BYTES) - 1)
                 while idx2 == idx:
-                    idx2 = rand.randint(0, len(BYTES)-1)
+                    idx2 = rand.randint(0, len(BYTES) - 1)
             else:
                 idx2 = rand.choice(USED)
 

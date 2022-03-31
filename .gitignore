@@ -1,4 +1,4 @@
-out.wav
+*.wav
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

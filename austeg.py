@@ -2,9 +2,10 @@ from argparse import ArgumentParser, Namespace
 from ast import arg
 from sys import argv
 from colorama import Fore, init
-from AuWav import AuWav
+from AuWav import Spectrogrammer, AuWav
 from Banner import display_banner
 from DEncode.dencode import decode, encode
+from Misc import better_hash
 
 
 init(autoreset=True, convert=True)
@@ -14,15 +15,22 @@ def parse_arguments() -> Namespace:
     parser = ArgumentParser(
         description="""
         Hides data inside of audio files.
-        """)
+        """
+    )
 
     # Select which algorithm to use
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "-lsb", help="Use LSB algorithm", action="store_true", dest="lsb")
-    
+        "-lsb", help="Use LSB algorithm", action="store_true", dest="lsb", default=False
+    )
+
     group.add_argument(
-        "-spectro", help="Use Spectrogram algorithm", action="store_true", dest="spectro")
+        "-spectro",
+        help="Use Spectrogram algorithm",
+        action="store_true",
+        dest="spectro",
+        default=False,
+    )
 
     # Required arguments
     parser.add_argument(
@@ -31,7 +39,7 @@ def parse_arguments() -> Namespace:
     parser.add_argument(
         "-k",
         "--key",
-        type=int,
+        # type=int,
         help="The key to decode a message from file",
         required=True,
     )
@@ -54,8 +62,8 @@ def parse_arguments() -> Namespace:
         required=False,
         default="out.wav",
     )
-    
-    return parser.parse_args()
+
+    return parser.parse_args(), parser
 
 
 def main(argv) -> None:
@@ -66,29 +74,41 @@ def main(argv) -> None:
     """
     display_banner(False)
 
-    args = parse_arguments()
+    args, parser = parse_arguments()
     # print(args)
     # au = AuWav(args.input)
 
-    print(args.input)
     if args.lsb:
         if args.input is None:
             print(f"{Fore.RED}[!!] Error: No input file specified")
+            parser.print_help()
             exit(1)
-    else:
-        au = AuWav(args.input)
-    if args.encrypt:
-        if args.data is None:
-            print(f"{Fore.RED}[!!] You need to provide some data to encode.")
-            exit(1)
-        n_au = encode(au, args.data, args.key)
-    else:
-        if args.bits is None:
-            print(
-                f"{Fore.RED}[!!] You need to specify how many bits to decode from the file."
-            )
-            exit(1)
-        decoded = decode(au, args.bits, args.key)
+        au = AuWav(args.input, args.output)
+        if args.encrypt:
+            if args.data is None:
+                print(f"{Fore.RED}[!!] You need to provide some data to encode.")
+                parser.print_help()
+                exit(1)
+            seed = better_hash(args.key)
+            n_au = encode(au, args.data, seed) # Use hash on the key so it can take strings and ints.
+        else:
+            if args.bits is None:
+                print(
+                    f"{Fore.RED}[!!] You need to specify how many bits to decode from the file."
+                )
+                exit(1)
+            seed = better_hash(args.key)
+            decoded = decode(au, args.bits, seed)
+    elif args.spectro:
+        if args.encrypt:
+            au = Spectrogrammer(args.output)
+            with open(args.input, "rb") as f:
+                data = f.read()
+                au.encode(data, args.output)
+        else:
+            au = Spectrogrammer(args.input)
+            extracted = au.decode()
+            print(f"{Fore.MAGENTA}[DECODED]{Fore.RESET}:\n{extracted.decode('utf8')}")
 
 
 if __name__ == "__main__":
