@@ -2,5 +2,8 @@ import hashlib
 
 
 def better_hash(string):
-    """Hash a string using a better algorithm than the default hashlib.sha256"""
+    """
+    Stable hash function for strings. Is needed so that the same string gives the same hash
+    every time.
+    """
     return int(hashlib.sha256(string.encode()).hexdigest(), 16)

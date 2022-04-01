@@ -7,6 +7,9 @@ import wave
 
 
 class AuBase(ABC):
+    """
+    Base class for the encyption and decryption of audio files.
+    """
     def __init__(self, input_filename:str, output_filename:str='out.wav') -> None:
         super().__init__()
         self.filename = input_filename

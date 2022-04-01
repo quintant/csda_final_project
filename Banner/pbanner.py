@@ -1,16 +1,15 @@
 from colorama import Fore, Back
-import Banner.pb_girl as pb_girl
 import Banner.gold_bar as gold_bar
-import Banner.crown as crown
 from random import choice
 import Banner.multi as multi
 
 
 def display_banner(random=False):
+    """
+    Displays a random banner ASCII image.
+    """
     options = [
-        # pb_girl.display,
-        # gold_bar.display,
-        # crown.display,
+        gold_bar.display,
         multi.display,
     ]
     img = choice(options)
@@ -19,6 +18,9 @@ def display_banner(random=False):
 
 
 def display_name():
+    """
+    Displays the name of the program in ANSI text.
+    """
     name = [
         f"{Back.BLACK+Fore.MAGENTA: >35} ▄▄▄· ▄• ▄▌.▄▄ · ▄▄▄▄▄▄▄▄ . ▄▄ • ",
         f"{Back.BLACK+Fore.BLUE: >35}▐█ ▀█ █▪██▌▐█ ▀. •██  ▀▄.▀·▐█ ▀ ▪",

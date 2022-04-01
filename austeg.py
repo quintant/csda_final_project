@@ -1,5 +1,4 @@
 from argparse import ArgumentParser, Namespace
-from ast import arg
 from sys import argv
 from colorama import Fore, init
 from AuWav import Spectrogrammer, AuWav
@@ -12,6 +11,7 @@ init(autoreset=True, convert=True)
 
 
 def parse_arguments() -> Namespace:
+    """Parses the arguments passed to the program"""
     parser = ArgumentParser(
         description="""
         Hides data inside of audio files.
@@ -23,7 +23,6 @@ def parse_arguments() -> Namespace:
     group.add_argument(
         "-lsb", help="Use LSB algorithm", action="store_true", dest="lsb", default=False
     )
-
     group.add_argument(
         "-spectro",
         help="Use Spectrogram algorithm",
@@ -32,7 +31,7 @@ def parse_arguments() -> Namespace:
         default=False,
     )
 
-    # Required arguments
+    # Sometimes required args.
     parser.add_argument(
         "-i", "--input", type=str, help="Input filename.", required=False
     )
@@ -41,7 +40,11 @@ def parse_arguments() -> Namespace:
         "--key",
         # type=int,
         help="The key to decode a message from file",
-        required=True,
+        required=False,
+    )
+    parser.add_argument("--data", type=str, help="Data filename.", required=False)
+    parser.add_argument(
+        "-b", "--bits", type=int, help="The number of bits too decode", required=False
     )
 
     # Mutually exclusive enc/dec
@@ -50,10 +53,6 @@ def parse_arguments() -> Namespace:
     group.add_argument("-d", "--decrypt", action="store_true")
 
     # Optional arguments
-    parser.add_argument("--data", type=str, help="Data filename.", required=False)
-    parser.add_argument(
-        "-b", "--bits", type=int, help="The number of bits too decode", required=False
-    )
     parser.add_argument(
         "-o",
         "--output",
@@ -79,6 +78,10 @@ def main(argv) -> None:
     # au = AuWav(args.input)
 
     if args.lsb:
+        if args.key is None:
+            print(Fore.RED + "Key required for LSB algorithm")
+            parser.print_help()
+            exit(1)
         if args.input is None:
             print(f"{Fore.RED}[!!] Error: No input file specified")
             parser.print_help()
@@ -90,19 +93,26 @@ def main(argv) -> None:
                 parser.print_help()
                 exit(1)
             seed = better_hash(args.key)
-            n_au = encode(au, args.data, seed) # Use hash on the key so it can take strings and ints.
+            n_au = encode(
+                au, args.data, seed
+            )  # Use hash on the key so it can take strings and ints.
         else:
             if args.bits is None:
                 print(
                     f"{Fore.RED}[!!] You need to specify how many bits to decode from the file."
                 )
+                parser.print_help()
                 exit(1)
             seed = better_hash(args.key)
             decoded = decode(au, args.bits, seed)
     elif args.spectro:
         if args.encrypt:
+            if args.data is None:
+                print(f"{Fore.RED}[!!] You need to provide some data to encode.")
+                parser.print_help()
+                exit(1)
             au = Spectrogrammer(args.output)
-            with open(args.input, "rb") as f:
+            with open(args.data, "rb") as f:
                 data = f.read()
                 au.encode(data, args.output)
         else:
