@@ -10,6 +10,10 @@
 <br>
 <br>
 
+## **Note for windows users.**
+If you are on windows you might have to replace `python3` with `python` or `py` in the examples below to run the code.
+
+
 # How to run the Extended LSB algorithm
 Here we use the flag `-lsb` to run the extended LSB algorithm.
 
