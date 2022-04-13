@@ -107,7 +107,7 @@ As an example of encoding data using the Spectrogramming algorithm, consider run
 ```bash
 python3 austeg.py -spectro -e --data TestData/data.txt --output hidden.wav
 ```
-Here we have specified that the contents of `TestData/data.txt` should be encoded and the resulting audio file should be written to `hidden.wav`. A screenshot of the spectrogram of `hidden.wav` is provided at [example_spectrogram.png](TestData/example_spectrogram.png). We can see that the spectrogram contains the base64 encoded contents of `TestData/data.txt`.
+Here we have specified that the contents of `TestData/data.txt` should be encoded and the resulting audio file should be written to `hidden.wav`. A screenshot of the spectrogram of `hidden.wav` is provided at [example_spectrogram.png](TestData/example_spectrogram.png) (visualised using [SonicVisualiser](https://www.sonicvisualiser.org/)). We can see that the spectrogram contains the base64 encoded contents of `TestData/data.txt`.
 
 
 #### **Decoding using Spectrogramming**
