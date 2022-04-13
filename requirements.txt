@@ -1,0 +1,7 @@
+colorama==0.4.4
+matplotlib==3.5.1
+numpy==1.22.3
+Pillow==9.1.0
+pydub==0.25.1
+tqdm==4.63.0
+wavio==0.0.4

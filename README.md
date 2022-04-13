@@ -10,6 +10,35 @@
 <br>
 <br>
 
+# Requirements
+Before you can run the program, you need to install the following dependencies :
+```python
+colorama==0.4.4
+matplotlib==3.5.1
+numpy==1.22.3
+Pillow==9.1.0
+pydub==0.25.1
+tqdm==4.63.0
+wavio==0.0.4
+```
+<small>*[requirements.txt](requirements.txt)</small>
+
+
+This is done by running the following command in the terminal:
+```
+pip install -r requirements.txt
+```
+or 
+```
+pyton3 -m pip install -r requirements.txt
+```
+
+
+<br>
+<br>
+<br>
+<br>
+
 ## **Note for windows users.**
 If you are on windows you might have to replace `python3` with `python` or `py` in the examples below to run the code.
 
