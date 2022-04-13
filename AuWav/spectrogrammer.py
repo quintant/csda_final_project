@@ -2,11 +2,12 @@
 
 from base64 import b64decode, b64encode
 import os
+from typing import Dict
 import numpy as np
 import wavio
 from PIL import Image, ImageDraw, ImageFont
-
-from AuWav.base import AuBase
+from tqdm import tqdm
+from colorama import Fore
 
 
 # The IMG_SIZE and FONT_SIZE constants need to match. IMG_SIZE has to be large
@@ -26,26 +27,30 @@ MIN_FREQ = 1000
 MAX_FREQ = 5000
 
 
-class Spectrogrammer(AuBase):
-    """A class that can:
+class Spectrogrammer:
+    """
+    A class that can:
     - write data to the spectrogram of an audio file,
     - extract text from the spectrogram of an audio file.
     """
 
     class StringToCharImages:
-        """A class that takes a string and converts each character of it into an image."""
+        """
+        A class that takes a string and converts each character of it into an image.
+        """
 
         def __init__(
             self,
             text,
             font=ImageFont.truetype(
                 # Becuase windows is stupid, we need to use a font that is pre-installed.
-                "consola.ttf" if os.name == 'nt' else "FiraCode-Regular.ttf", size=FONT_SIZE
+                "consola.ttf" if os.name == "nt" else "FiraCode-Regular.ttf",
+                size=FONT_SIZE,
             ),  # Font is assumed to be monospace.
         ):
-            self.text = text
-            self.img_size = IMG_SIZE
-            self.font = font
+            self.text = text  # The text to convert to images.
+            self.img_size = IMG_SIZE  # The size of each character as an image.
+            self.font = font  # The font to use. Assumed to be monospace.
             if not text:
                 raise ValueError("text must be non-empty.")
             if (
@@ -53,19 +58,26 @@ class Spectrogrammer(AuBase):
                 or font.getsize("A")[1] > self.img_size[1]
             ):
                 raise ValueError(
-                    f"fontsize ({font.getsize(text[0])}) is too big for image ({self.img_size})"
+                    f"fontsize ({font.getsize('A')}) is too big for image ({self.img_size})"
                 )
 
         def __iter__(self):
-            """Yield each character in self.text as a binary image."""
+            """
+            Yield each character in self.text as a binary image.
+
+            Yields:
+                PIL.Image.Image: the next character of self.text as an image.
+            """
             for c in self.text:
+                # Create an empty binary image.
                 img = Image.new("1", self.img_size)
+                # Draw the character on the image.
                 d = ImageDraw.Draw(img)
                 d.text((0, 0), c, fill="white", font=self.font)
                 yield img
 
-    def __init__(self, filename:str, out_filename:str="out.wav"):
-        super().__init__(filename, out_filename)
+    def __init__(self):
+        # Decompose IMG_SIZE.
         self.WIDTH, self.HEIGHT = IMG_SIZE
         # Each character will need CHAR_DURATION of audio.
         self.DURATION = CHAR_DURATION
@@ -83,17 +95,34 @@ class Spectrogrammer(AuBase):
         # A cache that stores how each character in our alphabet sounds.
         self.CHAR_LIBRARY = self._build_library(self.ALPHABET)
 
+    def _build_library(self, alphabet) -> Dict[str, Image.Image]:
+        """
+        Precalculates how each character in alphabet sounds.
 
-    def _build_library(self, alphabet):
-        """Precalculates how each character in alphabet sounds."""
+        Args:
+            alphabet (str): a string defining which characters we will encode/decode.
+        Returns:
+            string -> PIL.Image.Image dict: a dictionary that takes a character
+                and returns it as an image.
+        """
+        # Convert each character in our alphabet into an image.
         imger = self.StringToCharImages(alphabet)
         library = {}
-        for c, img in zip(alphabet, imger):
+        # Store how each character is as an image.
+        print(f"{Fore.YELLOW}[!]{Fore.RESET} Generating alphabet cache")
+        for c, img in tqdm(zip(alphabet, imger), total=len(alphabet)):
             library[c] = self.image_to_sound(img)
         return library
 
-    def image_to_sound(self, img):
-        """Turns an image into an audio segment whose spectrogram contains the image."""
+    def image_to_sound(self, img: Image.Image) -> np.ndarray:
+        """
+        Turns an image into an audio segment whose spectrogram contains the image.
+
+        Args:
+            img (PIL.Image.Image): the image to convert into sound
+        Returns:
+            np.ndarray (1d): the image as a audio byte stream
+        """
         # Here we make an assumption. As this program is intended to write data
         # into the spectrogram of an audio file we really do not care about
         # depth in our image. To make the character in the image clearer we make
@@ -119,8 +148,15 @@ class Spectrogrammer(AuBase):
 
         return audio_segment
 
-    def _column_to_sound(self, img_column):
-        """Turns an image column into an audio segment whose spectrogram contains the image column."""
+    def _column_to_sound(self, img_column: np.ndarray) -> np.ndarray:
+        """
+        Turns an image column into an audio segment whose spectrogram contains the image column.
+
+        Args:
+            img_columns (np.ndarray (1d)): a single column of an image to convert into sound
+        Returns
+            np.ndarray (1d): the column as a audio byte stream
+        """
         # We want to create a single sound wave that represents the image
         # column. We use Fourier's theorem and sum up the sine waves
         # corresponding to the pixel values in the image column.
@@ -136,8 +172,16 @@ class Spectrogrammer(AuBase):
 
         return total_waveform
 
-    def _pixel_to_sound(self, i, pixel_val):
-        """Turn a pixel's position and value in an image into a corresponding sine wave."""
+    def _pixel_to_sound(self, i: int, pixel_val: int) -> np.ndarray:
+        """
+        Turn a pixel's position and value in an image into a corresponding sine wave.
+
+        Args:
+            i (int): the position of the pixel on the y-axis (from the bottom)
+            pixel_val (int): the pixel's integer value
+        Returns:
+            np.ndarray (1d): the pixel as a audio byte stream
+        """
         # Map the pixel's position to a frequency between MIN_FREQ and MAX_FREQ.
         freq = MIN_FREQ + (MAX_FREQ - MIN_FREQ) / self.HEIGHT * i
 
@@ -152,22 +196,55 @@ class Spectrogrammer(AuBase):
 
         return sinewave
 
-    def encode(self, bytes_to_convert, out_wav_file:str):
-        """Write base64 encoded bytes to an audio file's spectrogram."""
+    def encode(self, data_filename: str, out_filename: str) -> None:
+        """
+        Write base64 encoded bytes to an audio file's spectrogram.
+
+        Args:
+            data_filename (str): path to the data file to encode.
+            out_filename (str): path where the resulting audio file should be written
+        Returns:
+            None
+        """
+        # Read the data.
+        with open(data_filename, "rb") as f:
+            bytes_to_convert = f.read()
+        # Convert the data to base64 format.
         b64text = b64encode(bytes_to_convert).decode()
+        # Conver the data to images.
         imger = self.StringToCharImages(b64text)
         # Convert each character image to an audio segment and concatenate them.
-        audio = np.hstack([self.image_to_sound(img) for img in imger])
-        wavio.write(out_wav_file, audio, SAMPLE_RATE, scale="none", sampwidth=2)
+        print(
+            f"{Fore.YELLOW}[!]{Fore.RESET} Converting base64 encoded data to an audio stream"
+        )
+        audio = np.hstack(
+            [self.image_to_sound(img) for img in tqdm(imger, total=len(b64text))]
+        )
+        # Write the resulting audio file.
+        print(f"{Fore.YELLOW}[!]{Fore.RESET} Writing results to {out_filename}")
+        wavio.write(out_filename, audio, SAMPLE_RATE, scale="none", sampwidth=2)
 
-    def decode(self):
-        """Extract base64 encoded bytes from an audio file's spectrogram."""
-        data = wavio.read(self.filename).data.flatten()
+    def decode(self, filename: str) -> bytes:
+        """
+        Extract base64 encoded bytes from an audio file's spectrogram.
+
+        Args:
+            filename (str): the audio file from which to extract hidden data from
+        Returns:
+            bytes: the decoded bytes
+        """
+        data = wavio.read(filename).data.flatten()
         # Calculate how many bytes from the audio stream a single character takes.
         BYTES_PER_CHAR = int(self.DURATION_COL * SAMPLE_RATE) * self.WIDTH
         extracted_char_list = []
         # Split the audio byte stream into character sized chunks.
-        for char_arr in np.split(data, data.shape[0] // BYTES_PER_CHAR):
+        print(
+            f"{Fore.YELLOW}[!]{Fore.RESET} Extracting base64 encoded data from {filename}"
+        )
+        for char_arr in tqdm(
+            np.split(data, data.shape[0] // BYTES_PER_CHAR),
+            total=data.shape[0] // BYTES_PER_CHAR,
+        ):
             # Use kNN to find the most similar character. By using kNN we can
             # extract the bytes from a audio file that has been compressed (but
             # not too much).
@@ -181,16 +258,3 @@ class Spectrogrammer(AuBase):
         # The bytes we extracted are base64 encoded. Decode them before returning.
         b64text = "".join(extracted_char_list)
         return b64decode(b64text)
-
-
-# __all__ = [Spectrogrammer]
-
-if __name__ == "__main__":
-    spectrogrammer = Spectrogrammer()
-    bytes_to_hide = b"Hello, world!"
-    file_to_hide_in = "out.wav"
-    print(f"Creating {file_to_hide_in} with bytes {bytes_to_hide}")
-    spectrogrammer.convert_to_sound(bytes_to_hide, file_to_hide_in)
-    print(f"Extracting bytes from {file_to_hide_in}")
-    extracted_bytes = spectrogrammer.extract_from_sound(file_to_hide_in)
-    print(f"Found bytes {extracted_bytes}")
