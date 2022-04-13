@@ -12,6 +12,7 @@ from colorama import Fore
 class AuWav:
     """
     Class that does LSB steganography (encoding and decoding) with randomness.
+    See the encode and decode methods for more details.
     """
 
     def __init__(self, filename: str, out_filename: str = "out.wav") -> None:

@@ -32,6 +32,7 @@ class Spectrogrammer:
     A class that can:
     - write data to the spectrogram of an audio file,
     - extract text from the spectrogram of an audio file.
+    See the encode and decode methods for more details.
     """
 
     class StringToCharImages:
@@ -198,7 +199,8 @@ class Spectrogrammer:
 
     def encode(self, data_filename: str, out_filename: str) -> None:
         """
-        Write base64 encoded bytes to an audio file's spectrogram.
+        Write base64 encoded bytes to an audio file's spectrogram. The
+        resulting .wav file will be written to out_filename.
 
         Args:
             data_filename (str): path to the data file to encode.
